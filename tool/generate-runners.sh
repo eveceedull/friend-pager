@@ -22,4 +22,16 @@ platform_list=$(IFS=,; echo "${platforms[*]}")
 flutter create --no-pub --project-name friend_pager --platforms="$platform_list" "$runner_dir"
 for platform in "${platforms[@]}"; do
   cp -R "$runner_dir/$platform" .
+  if [[ "$platform" == web ]]; then
+    cp tool/flutter_bootstrap.js web/flutter_bootstrap.js
+  fi
+  if [[ "$platform" == android ]]; then
+    # Local HTTP API access in debug builds only. Release has no cleartext exception.
+    python3 - <<'PYTHON'
+from pathlib import Path
+p = Path('android/app/src/debug/AndroidManifest.xml')
+s = p.read_text().replace('</manifest>', '    <application android:usesCleartextTraffic="true" />\n</manifest>')
+p.write_text(s)
+PYTHON
+  fi
 done

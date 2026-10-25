@@ -24,17 +24,17 @@ void main() {
   testWidgets('shows paging and receiving controls without submitting', (
     tester,
   ) async {
-    await tester.pumpWidget(const FriendPagerApp());
+    await tester.pumpWidget(const MaterialApp(home: PagerScreen()));
 
     expect(find.text('Receive Alerts'), findsOneWidget);
     expect(find.byKey(sendButton), findsOneWidget);
-    expect(find.textContaining('Prototype only'), findsOneWidget);
+    expect(find.textContaining('No notifications are sent'), findsOneWidget);
     expect(find.byKey(confirmationSlider), findsNothing);
     expect(find.text(submittedMessage), findsNothing);
   });
 
   testWidgets('receiving can be toggled off and back on', (tester) async {
-    await tester.pumpWidget(const FriendPagerApp());
+    await tester.pumpWidget(const MaterialApp(home: PagerScreen()));
     expect(
       tester.widget<SwitchListTile>(find.byType(SwitchListTile)).value,
       isTrue,
@@ -56,7 +56,7 @@ void main() {
   testWidgets('arming alone never submits and cancellation permits rearming', (
     tester,
   ) async {
-    await tester.pumpWidget(const FriendPagerApp());
+    await tester.pumpWidget(const MaterialApp(home: PagerScreen()));
     await armAlert(tester);
     expect(find.text('Slide to confirm (demo)'), findsOneWidget);
     expect(find.byKey(sendButton), findsNothing);
@@ -72,7 +72,7 @@ void main() {
   });
 
   testWidgets('a partial slide never submits', (tester) async {
-    await tester.pumpWidget(const FriendPagerApp());
+    await tester.pumpWidget(const MaterialApp(home: PagerScreen()));
     await armAlert(tester);
     final rect = tester.getRect(find.byKey(confirmationSlider));
     await tester.dragFrom(
@@ -91,7 +91,7 @@ void main() {
     testWidgets('a real slide submits the demo with receiving=$receiving', (
       tester,
     ) async {
-      await tester.pumpWidget(const FriendPagerApp());
+      await tester.pumpWidget(const MaterialApp(home: PagerScreen()));
       if (!receiving) {
         await tester.tap(find.byType(SwitchListTile));
         await tester.pumpAndSettle();

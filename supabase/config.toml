@@ -1,0 +1,46 @@
+# Local development only. Never link this project to a hosted instance.
+project_id = "friend-pager"
+[api]
+enabled = true
+port = 54321
+schemas = ["public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 17
+[db.migrations]
+enabled = true
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]
+[realtime]
+enabled = true
+[studio]
+enabled = true
+port = 54323
+[mailpit]
+enabled = true
+port = 54324
+[storage]
+enabled = false
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = []
+jwt_expiry = 3600
+enable_signup = true
+enable_anonymous_sign_ins = true
+[auth.email]
+enable_signup = true
+enable_confirmations = false
+[auth.hook.before_user_created]
+enabled = true
+uri = "pg-functions://postgres/private/before_user_created"
+[auth.sms]
+enable_signup = false
+[edge_runtime]
+enabled = false
+[analytics]
+enabled = false
