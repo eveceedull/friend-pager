@@ -13,21 +13,23 @@ permissions:
 jobs:
   quality:
     name: Flutter analysis and tests
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
         with:
-          channel: stable
-          cache: true
+          persist-credentials: false
+      - uses: ./.github/actions/setup-flutter
       - name: Install dependencies
-        run: flutter pub get
+        run: flutter pub get --enforce-lockfile
       - name: Enforce formatting
         run: dart format --output=none --set-exit-if-changed lib test
       - name: Static analysis
         run: flutter analyze --fatal-infos
       - name: Widget and unit tests with coverage
         run: flutter test --coverage
+      - name: Browser widget tests
+        run: flutter test --platform chrome
       - name: Enforce baseline coverage
         shell: bash
         run: |
@@ -45,6 +47,7 @@ jobs:
   build:
     name: Build ${{ matrix.target }}
     needs: quality
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
@@ -64,10 +67,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
         with:
-          channel: stable
-          cache: true
+          persist-credentials: false
+      - uses: ./.github/actions/setup-flutter
       - name: Install Linux build dependencies
         if: matrix.target == 'linux'
         run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
@@ -78,6 +80,8 @@ jobs:
           distribution: temurin
           java-version: '17'
       - name: Generate platform runners
-        run: flutter create --project-name friend_pager --platforms=android,windows,linux,web .
+        run: flutter create --no-pub --project-name friend_pager --platforms=android,windows,linux,web .
+      - name: Install locked dependencies
+        run: flutter pub get --enforce-lockfile
       - name: Build
         run: ${{ matrix.command }}

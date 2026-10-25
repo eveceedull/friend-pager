@@ -23,14 +23,23 @@ Flutter for shared UI; Supabase for group membership, devices, heartbeats, and a
 
 ## Local quick start
 
-With Flutter installed:
+Use Flutter 3.47.8, revision `737ba8f885dc774b53b442759999a312c9461e4e`, matching the SDK pinned in `.github/actions/setup-flutter/action.yml`. With Flutter installed:
 
 ```sh
 flutter create --project-name friend_pager --platforms=android,windows,linux,web .
-flutter pub get
+flutter pub get --enforce-lockfile
 flutter test
+flutter test --platform chrome
 flutter analyze --fatal-infos
 flutter run -d chrome
 ```
 
 The native project runners are generated in CI until platform-specific integrations are introduced.
+
+## Validation limits
+
+CI enforces Dart formatting, fatal static-analysis diagnostics, widget tests on the Flutter VM and Chrome, a 65% minimum line-coverage baseline, and release compilation for all four target platforms. The widget tests exercise actual slider gestures, cancellation, resetting, and sending with receiving disabled. The coverage percentage is a floor, not proof of behavioral correctness.
+
+Native builds verify compilation only. Android currently uses the generated runner's debug signing configuration; these are not distribution-ready signed releases. Native device interaction, installation, background behavior, accessibility, and notification delivery still require validation. The prototype sends no real alerts.
+
+Repository administrators should select `Flutter analysis and tests`, `Build web`, `Build android`, `Build linux`, and `Build windows` as required status checks on main. An enabled required-status-check rule with an empty check list does not enforce these jobs. CI changes must preserve full-SHA action pins, including any transitive actions.

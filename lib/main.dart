@@ -51,7 +51,8 @@ class _PagerScreenState extends State<PagerScreen> {
                     title: const Text('Receive Alerts'),
                     subtitle: const Text('This device only'),
                     value: _receiveAlerts,
-                    onChanged: (enabled) => setState(() => _receiveAlerts = enabled),
+                    onChanged: (enabled) =>
+                        setState(() => _receiveAlerts = enabled),
                   ),
                   const SizedBox(height: 48),
                   const Icon(Icons.notifications_active, size: 72),
