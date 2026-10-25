@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Flutter analysis and tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Enforce formatting
+        run: dart format --output=none --set-exit-if-changed lib test
+      - name: Static analysis
+        run: flutter analyze --fatal-infos
+      - name: Widget and unit tests with coverage
+        run: flutter test --coverage
+      - name: Enforce baseline coverage
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          data = Path('coverage/lcov.info').read_text()
+          found = sum(int(line[3:]) for line in data.splitlines() if line.startswith('LF:'))
+          hit = sum(int(line[3:]) for line in data.splitlines() if line.startswith('LH:'))
+          assert found > 0, 'No instrumented Dart lines'
+          minimum = 65
+          assert 100 * hit >= minimum * found, f'Coverage {hit}/{found} is below {minimum}%'
+          print(f'Coverage: {hit}/{found} lines')
+          PY
+
+  build:
+    name: Build ${{ matrix.target }}
+    needs: quality
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: web
+            os: ubuntu-latest
+            command: flutter build web --release
+          - target: android
+            os: ubuntu-latest
+            command: flutter build apk --release
+          - target: linux
+            os: ubuntu-latest
+            command: flutter build linux --release
+          - target: windows
+            os: windows-latest
+            command: flutter build windows --release
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install Linux build dependencies
+        if: matrix.target == 'linux'
+        run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+      - name: Install Java for Android
+        if: matrix.target == 'android'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Generate platform runners
+        run: flutter create --project-name friend_pager --platforms=android,windows,linux,web .
+      - name: Build
+        run: ${{ matrix.command }}
