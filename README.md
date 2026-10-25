@@ -26,7 +26,7 @@ Flutter for shared UI; Supabase for group membership, devices, heartbeats, and a
 Use Flutter 3.47.8, revision `737ba8f885dc774b53b442759999a312c9461e4e`, matching the SDK pinned in `.github/actions/setup-flutter/action.yml`. With Flutter installed:
 
 ```sh
-flutter create --project-name friend_pager --platforms=android,windows,linux,web .
+bash tool/generate-runners.sh
 flutter pub get --enforce-lockfile
 flutter test
 flutter test --platform chrome
@@ -34,7 +34,7 @@ flutter analyze --fatal-infos
 flutter run -d chrome
 ```
 
-The native project runners are generated in CI until platform-specific integrations are introduced.
+The platform runners are generated in CI until platform-specific integrations are introduced. Run the bootstrap script once from Bash (Git Bash on Windows); it creates temporary scaffolding and copies only platform folders, preserving application code and the lockfile. It refuses to overwrite existing runners.
 
 ## Validation limits
 

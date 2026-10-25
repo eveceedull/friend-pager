@@ -80,7 +80,8 @@ jobs:
           distribution: temurin
           java-version: '17'
       - name: Generate platform runners
-        run: flutter create --no-pub --project-name friend_pager --platforms=android,windows,linux,web .
+        shell: bash
+        run: bash tool/generate-runners.sh ${{ matrix.target }}
       - name: Install locked dependencies
         run: flutter pub get --enforce-lockfile
       - name: Build
