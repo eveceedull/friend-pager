@@ -1,0 +1,11 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  errors:
+    invalid_annotation_target: error
+  exclude:
+    - build/**
+
+linter:
+  rules:
+    prefer_const_constructors: true
