@@ -5,14 +5,33 @@ import 'package:friend_pager/backend/local_config.dart';
 import 'package:friend_pager/backend/local_http_client.dart';
 import 'package:friend_pager/backend/registration_repository.dart';
 
+class MemoryAuthStorage extends GotrueAsyncStorage {
+  final values = <String, String>{};
+  @override
+  Future<String?> getItem({required String key}) async => values[key];
+  @override
+  Future<void> setItem({required String key, required String value}) async {
+    values[key] = value;
+  }
+
+  @override
+  Future<void> removeItem({required String key}) async {
+    values.remove(key);
+  }
+}
+
 void main() {
   final config = LocalConfig(const String.fromEnvironment('SUPABASE_URL'),
       const String.fromEnvironment('SUPABASE_ANON_KEY'));
   final clients = <SupabaseClient>[];
+  final transports = <LocalHttpClient>[];
   SupabaseClient client() {
+    final transport = LocalHttpClient(config);
+    transports.add(transport);
     final value = SupabaseClient(config.url, config.anonKey,
-        httpClient: LocalHttpClient(config),
-        authOptions: const AuthClientOptions(autoRefreshToken: false));
+        httpClient: transport,
+        authOptions: AuthClientOptions(
+            autoRefreshToken: false, pkceAsyncStorage: MemoryAuthStorage()));
     clients.add(value);
     return value;
   }
@@ -31,6 +50,10 @@ void main() {
       await c.dispose();
     }
     clients.clear();
+    for (final transport in transports) {
+      transport.close();
+    }
+    transports.clear();
   });
 
   test(
@@ -129,7 +152,8 @@ void main() {
     await expectLater(
         c.auth.signUp(
             email: 'uninvited@example.test', password: 'test-password-123'),
-        throwsA(isA<AuthException>()));
+        throwsA(isA<AuthException>().having(
+            (e) => e.message, 'signup policy', contains('provisioned'))));
     await c.auth.signInAnonymously();
     for (final change in [
       {'p_display_name': '  '},

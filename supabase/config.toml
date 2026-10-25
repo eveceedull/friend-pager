@@ -33,8 +33,11 @@ jwt_expiry = 3600
 enable_signup = true
 enable_anonymous_sign_ins = true
 [auth.email]
-enable_signup = false
+enable_signup = true
 enable_confirmations = false
+[auth.hook.before_user_created]
+enabled = true
+uri = "pg-functions://postgres/private/before_user_created"
 [auth.sms]
 enable_signup = false
 [edge_runtime]

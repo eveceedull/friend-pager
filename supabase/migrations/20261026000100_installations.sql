@@ -115,3 +115,19 @@ end;
 $$;
 revoke all on function public.revoke_installation(uuid) from public, anon;
 grant execute on function public.revoke_installation(uuid) to authenticated;
+
+-- Keep email/password login enabled for provisioned admins while refusing public
+-- email account creation. The Auth admin API provisions accounts separately.
+create function private.before_user_created(event jsonb) returns jsonb
+language plpgsql set search_path = '' as $$
+begin
+  if coalesce((event->'user'->>'is_anonymous')::boolean, false) then
+    return '{}'::jsonb;
+  end if;
+  return jsonb_build_object('error', jsonb_build_object(
+    'http_code', 403, 'message', 'Email accounts must be provisioned by an administrator'));
+end;
+$$;
+revoke all on function private.before_user_created(jsonb) from public, anon, authenticated;
+grant usage on schema private to supabase_auth_admin;
+grant execute on function private.before_user_created(jsonb) to supabase_auth_admin;
