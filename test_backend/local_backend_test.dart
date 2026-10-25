@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:friend_pager/backend/local_config.dart';
+import 'package:friend_pager/backend/local_http_client.dart';
 import 'package:friend_pager/backend/registration_repository.dart';
 
 void main() {
@@ -10,6 +11,7 @@ void main() {
   final clients = <SupabaseClient>[];
   SupabaseClient client() {
     final value = SupabaseClient(config.url, config.anonKey,
+        httpClient: LocalHttpClient(config),
         authOptions: const AuthClientOptions(autoRefreshToken: false));
     clients.add(value);
     return value;

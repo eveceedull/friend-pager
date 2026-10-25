@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'backend/local_config.dart';
+import 'backend/local_http_client.dart';
 import 'backend/registration_repository.dart';
 import 'registration_screen.dart';
 
@@ -17,6 +18,7 @@ Future<void> main() async {
     await Supabase.initialize(
         url: config.url,
         publishableKey: config.anonKey,
+        httpClient: LocalHttpClient(config),
         authOptions: const FlutterAuthClientOptions(detectSessionInUri: false));
     repository = SupabaseRegistrationRepository(Supabase.instance.client);
     final info = await PackageInfo.fromPlatform();

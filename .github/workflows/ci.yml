@@ -93,7 +93,6 @@ jobs:
 
   backend:
     name: Local Supabase integration
-    needs: quality
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -105,12 +104,12 @@ jobs:
         run: flutter pub get --enforce-lockfile
       - name: Install pinned Supabase CLI
         run: bash tool/install-supabase-ci.sh
-      - name: Enable host port proxy for internal Docker network
-        run: bash tool/enable-ci-port-proxy.sh
       - name: Start isolated local stack
         run: bash tool/supabase.sh start
       - name: Rebuild database from migrations and seed
         run: bash tool/supabase.sh reset
+      - name: Verify backend ports are loopback-only
+        run: python3 tool/check-local-ports.py
       - name: Provision synthetic local admin and connection settings
         run: python3 tool/prepare-local.py
       - name: Test Auth, registration, RLS, session restore, revocation and rejoin
