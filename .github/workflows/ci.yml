@@ -105,6 +105,8 @@ jobs:
         run: flutter pub get --enforce-lockfile
       - name: Install pinned Supabase CLI
         run: bash tool/install-supabase-ci.sh
+      - name: Enable host port proxy for internal Docker network
+        run: bash tool/enable-ci-port-proxy.sh
       - name: Start isolated local stack
         run: bash tool/supabase.sh start
       - name: Rebuild database from migrations and seed

@@ -131,6 +131,7 @@ void main() {
     await c.auth.signInAnonymously();
     for (final change in [
       {'p_display_name': '  '},
+      {'p_display_name': '\t\n'},
       {'p_platform': 'ios'},
       {'p_device_name': ''},
       {'p_password': 'a' * 73},

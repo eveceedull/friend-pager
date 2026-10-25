@@ -58,6 +58,8 @@ begin
   end if;
   if p_password is null or octet_length(p_password) not between 1 and 72
     or p_display_name is null or length(btrim(p_display_name)) not between 1 and 80
+    or p_display_name !~ '[^[:space:]]'
+    or p_device_name !~ '[^[:space:]]'
     or p_device_name is null or length(btrim(p_device_name)) not between 1 and 120
     or p_app_version is null or length(p_app_version) not between 1 and 40
     or p_platform is null or p_platform not in ('android', 'windows', 'linux', 'web')
