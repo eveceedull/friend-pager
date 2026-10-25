@@ -7,6 +7,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+env:
+  SUPABASE_TELEMETRY_DISABLED: "1"
+  DO_NOT_TRACK: "1"
+
 permissions:
   contents: read
 
@@ -23,7 +27,7 @@ jobs:
       - name: Install dependencies
         run: flutter pub get --enforce-lockfile
       - name: Enforce formatting
-        run: dart format --output=none --set-exit-if-changed lib test
+        run: dart format --output=none --set-exit-if-changed lib test test_backend
       - name: Static analysis
         run: flutter analyze --fatal-infos
       - name: Widget and unit tests with coverage
@@ -54,7 +58,7 @@ jobs:
         include:
           - target: web
             os: ubuntu-latest
-            command: flutter build web --release
+            command: flutter build web --release --no-web-resources-cdn
           - target: android
             os: ubuntu-latest
             command: flutter build apk --release
@@ -86,3 +90,29 @@ jobs:
         run: flutter pub get --enforce-lockfile
       - name: Build
         run: ${{ matrix.command }}
+
+  backend:
+    name: Local Supabase integration
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-flutter
+      - name: Install locked dependencies
+        run: flutter pub get --enforce-lockfile
+      - name: Install pinned Supabase CLI
+        run: bash tool/install-supabase-ci.sh
+      - name: Start isolated local stack
+        run: bash tool/supabase.sh start
+      - name: Rebuild database from migrations and seed
+        run: bash tool/supabase.sh reset
+      - name: Provision synthetic local admin and connection settings
+        run: python3 tool/prepare-local.py
+      - name: Test Auth, registration, RLS, session restore, revocation and rejoin
+        run: flutter test --dart-define-from-file=.local/config.json test_backend
+      - name: Stop local stack
+        if: always()
+        run: bash tool/supabase.sh stop --no-backup

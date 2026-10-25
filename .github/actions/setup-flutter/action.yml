@@ -18,5 +18,5 @@ runs:
         else
           echo "$sdk/bin" >> "$GITHUB_PATH"
         fi
-        "$sdk/bin/flutter" --version
         "$sdk/bin/flutter" config --no-analytics
+        "$sdk/bin/flutter" --version
