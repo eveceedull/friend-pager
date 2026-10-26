@@ -1,5 +1,5 @@
 FROM debian:bookworm-slim AS build
-ENV CI=true DO_NOT_TRACK=1 DEBIAN_FRONTEND=noninteractive PATH=/opt/flutter/bin:$PATH
+ENV CI=true DO_NOT_TRACK=1 FLUTTER_SUPPRESS_ANALYTICS=true DASH__SUPPRESS_ANALYTICS=true DEBIAN_FRONTEND=noninteractive PATH=/opt/flutter/bin:$PATH
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates curl git unzip xz-utils zip libglu1-mesa python3 \
     && rm -rf /var/lib/apt/lists/*

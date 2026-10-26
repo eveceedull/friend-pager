@@ -10,6 +10,8 @@ on:
 env:
   SUPABASE_TELEMETRY_DISABLED: "1"
   DO_NOT_TRACK: "1"
+  FLUTTER_SUPPRESS_ANALYTICS: "true"
+  DASH__SUPPRESS_ANALYTICS: "true"
 
 permissions:
   contents: read
