@@ -84,6 +84,7 @@ services:
       PGRST_JWT_SECRET: *jwt-secret
       PGRST_DB_USE_LEGACY_GUCS: 'false'
       PGRST_ADMIN_SERVER_PORT: '3001'
+      PGRST_ADMIN_SERVER_HOST: 127.0.0.1
     healthcheck:
       test: [CMD, postgrest, --ready]
       interval: 3s
