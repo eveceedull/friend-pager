@@ -1,0 +1,14 @@
+.git
+.dart_tool
+.local
+.env
+.env.*
+build
+coverage
+android
+ios
+linux
+macos
+windows
+web
+**/__pycache__

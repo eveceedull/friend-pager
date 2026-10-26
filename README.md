@@ -10,7 +10,44 @@ The app joins one password-protected group, registers this installation with a r
 
 Targets: Android, Windows, Linux, and web. iOS and macOS remain deferred.
 
-## Local setup (Windows and Linux)
+## One-command local stack (Docker only)
+
+From a fresh checkout, with Docker Engine/Desktop and Docker Compose v2 available:
+
+```sh
+docker compose up
+```
+
+Then open **http://localhost:7357**. The first start downloads build dependencies/container images and compiles the Flutter web app, so allow several minutes. No `.env` copy, host Flutter/Python/Supabase CLI installation, or separate bootstrap command is needed. Compose starts PostgreSQL, Auth, PostgREST, Realtime, a local test-email inbox, and the web app. It automatically applies repository migrations, seeds the local group, and provisions the synthetic admin. No Docker socket is mounted into any service.
+
+- Group password: **`local-group-password`**.
+- Synthetic admin: **`local-admin@example.test` / `local-admin-password`** (backend login; admin UI is still future work).
+- Web app: **http://localhost:7357**.
+- API for native/CLI clients: **http://127.0.0.1:54321**.
+- PostgreSQL: localhost:54322; test email inbox: http://localhost:54324.
+
+Use two independent browser profiles to test paging. On each receiver, select **Enable/test sound** once, then send from the other installation. The sender stays silent. The web app reads only its public API key at runtime and uses its own local origin for API/WebSocket calls; no hosted backend can be supplied through the runtime JSON.
+
+```sh
+# Run detached, waiting for healthy services.
+docker compose up -d --wait
+# Rebuild after changing app code, migrations or Dockerfiles.
+docker compose up --build
+# Stop containers; keep registrations, sessions and preferences.
+docker compose down
+# DESTRUCTIVE: delete the local Compose database and start fresh.
+docker compose down --volumes
+```
+
+Named volumes retain data. On a later `up`, the bootstrap applies only new migrations and never reseeds existing group credentials or resets installations. It rejects edits to an already-applied migration; restore the original file and add a new migration, or deliberately reset disposable local volumes. Build images again when adding a migration (`docker compose up --build`).
+
+Every published port binds to loopback. All database passwords, signing material, group/admin passwords in this setup are **public, disposable local fixtures**, never production credentials. Do not expose this stack to your LAN/internet or reuse its fixture credentials in production. Runtime services have no SaaS integrations, external SMTP, or telemetry configured; Docker/Flutter/Python still download build artifacts on first build. This local Compose setup does not include Supabase Studio, Storage, Edge Functions or FCM, which the current app does not use.
+
+The CLI workflow below remains supported for native development and Supabase Studio. Do not run both stacks simultaneously on their default ports: stop the CLI stack before Compose, or stop Compose before starting the CLI. Their data volumes are independent. Native development can obtain the Compose public key at `http://127.0.0.1:54321/local-config.json` and use the API URL above; no service-role key belongs in an app config.
+
+CI validates a clean Compose start, runs the entire real backend suite against it, loads and joins through the served web UI with external runtime requests blocked, and checks that a session and saved receiving preference survive `down`/`up` without deleting volumes.
+
+## Advanced CLI local setup (Windows and Linux)
 
 Prerequisites: Flutter 3.47.8 (revision `737ba8f885dc774b53b442759999a312c9461e4e`), Docker Desktop/OrbStack or a compatible Docker Engine, Supabase CLI **2.122.0**, Python 3, and Bash (Git Bash on Windows). Use `python3` in the commands below; configure that command for your Python installation if needed.
 
