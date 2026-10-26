@@ -76,7 +76,9 @@ jobs:
       - uses: ./.github/actions/setup-flutter
       - name: Install Linux build dependencies
         if: matrix.target == 'linux'
-        run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
+        run: |
+          sudo apt-get -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 -o Acquire::Retries=3 update
+          sudo apt-get -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 -o Acquire::Retries=3 install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
       - name: Install Java for Android
         if: matrix.target == 'android'
         uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3
@@ -117,3 +119,44 @@ jobs:
       - name: Stop local stack
         if: always()
         run: bash tool/supabase.sh stop --no-backup
+
+  compose:
+    name: Docker Compose local stack
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-flutter
+      - name: Install locked Dart dependencies
+        run: flutter pub get --enforce-lockfile
+      - name: Validate Compose configuration
+        run: docker compose config --quiet
+      - name: Start from a clean checkout with one Compose up command
+        run: docker compose up -d --wait --wait-timeout 240
+      - name: Verify public config and persistent session fixture
+        run: python3 tool/compose/smoke.py
+      - name: Run all backend tests against the Compose stack
+        run: flutter test --dart-define-from-file=.local/compose-config.json test_backend
+      - name: Install browser test tooling
+        run: |
+          python3 -m venv .local/compose-browser
+          .local/compose-browser/bin/pip install playwright==1.55.0
+      - name: Test real served web app with no external runtime requests
+        run: .local/compose-browser/bin/python tool/compose/browser.py
+      - name: Stop containers while preserving data
+        run: docker compose down
+      - name: Restart the existing data with the same command
+        run: docker compose up -d --wait --wait-timeout 240
+      - name: Verify session and preference persistence
+        run: python3 tool/compose/smoke.py --verify-persistence
+      - name: Capture diagnostics on failure
+        if: failure()
+        run: |
+          docker compose ps -a
+          docker compose ps -aq | xargs -r docker inspect --format '{{.Name}} {{json .State.Health}}'
+          docker compose logs --no-color --tail=150
+      - name: Clean up disposable Compose data
+        if: always()
+        run: docker compose down --volumes --remove-orphans

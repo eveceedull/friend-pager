@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'backend/local_config.dart';
+import 'backend/config_loader.dart';
 import 'backend/local_http_client.dart';
 import 'backend/registration_repository.dart';
 import 'registration_screen.dart';
@@ -14,8 +14,11 @@ Future<void> main() async {
   String? setupError;
   var appVersion = 'unknown';
   try {
-    final config = LocalConfig(const String.fromEnvironment('SUPABASE_URL'),
-        const String.fromEnvironment('SUPABASE_ANON_KEY'));
+    final config = await loadLocalConfig(
+      url: const String.fromEnvironment('SUPABASE_URL'),
+      anonKey: const String.fromEnvironment('SUPABASE_ANON_KEY'),
+      webUri: kIsWeb ? Uri.base : null,
+    );
     await Supabase.initialize(
         url: config.url,
         publishableKey: config.anonKey,
