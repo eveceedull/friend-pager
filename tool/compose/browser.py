@@ -22,8 +22,8 @@ with sync_playwright() as p:
         page.get_by_role('textbox', name='Group password', exact=True).fill('local-group-password')
         page.get_by_role('button', name='Join group', exact=True).click()
         page.get_by_role('button', name='SEND ALERT', exact=True).wait_for(timeout=20000)
-        page.get_by_label('Joined as Compose browser reviewer', exact=True).wait_for()
-        page.get_by_label('Connected for live alerts', exact=True).wait_for(timeout=20000)
+        page.get_by_text('Joined as Compose browser reviewer', exact=True).wait_for()
+        page.get_by_text('Connected for live alerts', exact=True).wait_for(timeout=20000)
         assert not external, f'Unexpected external runtime requests: {external}'
         print('Actual Compose web build loaded runtime config, joined and connected to Realtime through its UI.')
     except Exception:
