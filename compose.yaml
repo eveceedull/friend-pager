@@ -112,6 +112,9 @@ services:
       DB_AFTER_CONNECT_QUERY: SET search_path TO _realtime
       DB_ENC_KEY: supabaserealtime
       API_JWT_SECRET: *jwt-secret
+      METRICS_JWT_SECRET: *jwt-secret
+      METRICS_PUSHER_ENABLED: 'false'
+      TENANT_METRICS_PUSHER_ENABLED: 'false'
       SECRET_KEY_BASE: friend-pager-compose-local-only-realtime-secret-not-for-production-1234567890
       APP_NAME: realtime
       SEED_SELF_HOST: 'true'
