@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'backend/registration_repository.dart';
-import 'main.dart' show PagerScreen;
+import 'pager_screen.dart';
 
 class RegistrationGate extends StatefulWidget {
   const RegistrationGate(
@@ -102,7 +102,7 @@ class _RegistrationGateState extends State<RegistrationGate> {
   Widget build(BuildContext context) {
     if (_installation != null) {
       return PagerScreen(
-          installation: _installation, repository: widget.repository);
+          installation: _installation!, repository: widget.repository);
     }
     return Scaffold(
       appBar: AppBar(title: const Text('Join Friend Pager')),
