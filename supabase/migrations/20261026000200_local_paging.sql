@@ -50,15 +50,15 @@ grant execute on function public.send_alert() to authenticated;
 -- Check live authorization/expiry again before presentation, including events
 -- already in transit when receiving was disabled or an installation was revoked.
 -- Remaining lifetime comes from the server, not the device's wall clock.
-create function public.get_live_alert(p_id uuid) returns jsonb
+create function public.get_live_alert(p_id uuid, p_not_before timestamptz default '-infinity') returns jsonb
 language sql security invoker set search_path = '' as $$
   select jsonb_build_object('id', id, 'sender_installation_id', sender_installation_id,
     'sender_name', sender_name,
     'remaining_ms', greatest(0, floor(extract(epoch from (expires_at - clock_timestamp())) * 1000)))
-  from public.alert_deliveries where id = p_id and expires_at > clock_timestamp();
+  from public.alert_deliveries where id = p_id and expires_at > clock_timestamp() and created_at >= p_not_before;
 $$;
-revoke all on function public.get_live_alert(uuid) from public, anon;
-grant execute on function public.get_live_alert(uuid) to authenticated;
+revoke all on function public.get_live_alert(uuid,timestamptz) from public, anon;
+grant execute on function public.get_live_alert(uuid,timestamptz) to authenticated;
 
 create function private.purge_expired_alerts() returns void
 language sql security definer set search_path = '' as $$
@@ -67,3 +67,9 @@ $$;
 revoke all on function private.purge_expired_alerts() from public, anon, authenticated;
 create extension if not exists pg_cron;
 select cron.schedule('purge-expired-alerts', '* * * * *', 'select private.purge_expired_alerts()');
+
+-- Establish a new receive boundary from the same clock used to timestamp alerts.
+create function public.paging_cursor() returns timestamptz
+language sql security invoker set search_path = '' as $$ select clock_timestamp(); $$;
+revoke all on function public.paging_cursor() from public, anon;
+grant execute on function public.paging_cursor() to authenticated;

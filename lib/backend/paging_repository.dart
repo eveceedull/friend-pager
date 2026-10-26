@@ -30,6 +30,8 @@ class SupabasePagingRepository implements PagingRepository {
   RealtimeChannel? _channel;
   bool _disposed = false;
   Future<void>? _closing;
+  String? _notBefore;
+  int _subscriptionGeneration = 0;
   @override
   Stream<String> get alerts => _alerts.stream;
   @override
@@ -52,24 +54,42 @@ class SupabasePagingRepository implements PagingRepository {
               column: 'recipient_user_id',
               value: user.id),
           callback: (payload) {
-            if (!_disposed && payload.newRecord['id'] is String) {
+            if (!_disposed &&
+                _notBefore != null &&
+                payload.newRecord['id'] is String) {
               _alerts.add(payload.newRecord['id'] as String);
             }
           },
         )
         .subscribe((status, error) {
       if (_disposed) return;
-      _connection.add(status == RealtimeSubscribeStatus.subscribed);
-      if (status == RealtimeSubscribeStatus.subscribed && !ready.isCompleted) {
-        ready.complete();
-      }
-      if ((status == RealtimeSubscribeStatus.channelError ||
+      _subscriptionGeneration++;
+      _notBefore = null;
+      _connection.add(false);
+      if (status == RealtimeSubscribeStatus.subscribed) {
+        unawaited(_synchronize(ready, _subscriptionGeneration));
+      } else if ((status == RealtimeSubscribeStatus.channelError ||
               status == RealtimeSubscribeStatus.timedOut) &&
           !ready.isCompleted) {
         ready.completeError(StateError('Realtime unavailable'));
       }
     });
     await ready.future.timeout(const Duration(seconds: 10));
+  }
+
+  Future<void> _synchronize(Completer<void> ready, int generation) async {
+    try {
+      final cursor =
+          await client.rpc('paging_cursor').timeout(const Duration(seconds: 3));
+      if (_disposed || generation != _subscriptionGeneration) return;
+      _notBefore = cursor as String;
+      _connection.add(true);
+      if (!ready.isCompleted) ready.complete();
+    } catch (_) {
+      if (!_disposed && !ready.isCompleted) {
+        ready.completeError(StateError('Receive synchronization failed'));
+      }
+    }
   }
 
   @override
@@ -81,8 +101,10 @@ class SupabasePagingRepository implements PagingRepository {
   @override
   Future<PageAlert?> getLiveAlert(String id) async {
     final elapsed = Stopwatch()..start();
-    final value = await client.rpc('get_live_alert',
-        params: {'p_id': id}).timeout(const Duration(seconds: 3));
+    final value = await client.rpc('get_live_alert', params: {
+      'p_id': id,
+      'p_not_before': _notBefore ?? '-infinity'
+    }).timeout(const Duration(seconds: 3));
     if (value == null) return null;
     final data = Map<String, dynamic>.from(value as Map);
     final remaining =
