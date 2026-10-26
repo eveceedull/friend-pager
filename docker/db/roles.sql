@@ -3,8 +3,6 @@
 \getenv pgpass POSTGRES_PASSWORD
 alter user authenticator with password :'pgpass';
 alter user supabase_auth_admin with password :'pgpass';
-alter user supabase_functions_admin with password :'pgpass';
-alter user supabase_storage_admin with password :'pgpass';
 alter user supabase_admin with password :'pgpass';
 alter user postgres with password :'pgpass';
 create schema if not exists _realtime authorization supabase_admin;

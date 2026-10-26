@@ -47,6 +47,7 @@ def migrate():
             with db.transaction():
                 db.execute(Path('/app/seed.sql').read_text(), prepare=False)
                 db.execute("insert into compose_bootstrap.migrations(name,checksum) values ('local-seed','local-fixture')")
+        db.execute("notify pgrst, 'reload schema'")
         db.execute('select pg_advisory_unlock(674819251)')
 
 
