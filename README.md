@@ -45,7 +45,7 @@ Every published port binds to loopback. All database passwords, signing material
 
 The CLI workflow below remains supported for native development and Supabase Studio. Do not run both stacks simultaneously on their default ports: stop the CLI stack before Compose, or stop Compose before starting the CLI. Their data volumes are independent. Native development can obtain the Compose public key at `http://127.0.0.1:54321/local-config.json` and use the API URL above; no service-role key belongs in an app config.
 
-CI validates a clean Compose start, runs the entire real backend suite against it, loads and joins through the served web UI with external runtime requests blocked, and checks that a session and saved receiving preference survive `down`/`up` without deleting volumes.
+CI validates a clean Compose start, runs the entire real backend suite against it, loads and joins through the served web UI in three fresh sessions (normal, 4x and 8x CPU slowdown), verifies the submitted join values, blocks external runtime requests, and checks that a session and saved receiving preference survive `down`/`up` without deleting volumes.
 
 ## Advanced CLI local setup (Windows and Linux)
 
@@ -53,6 +53,7 @@ Prerequisites: Flutter 3.47.8 (revision `737ba8f885dc774b53b442759999a312c9461e4
 
 ```sh
 export SUPABASE_TELEMETRY_DISABLED=1 DO_NOT_TRACK=1
+export FLUTTER_SUPPRESS_ANALYTICS=true DASH__SUPPRESS_ANALYTICS=true
 flutter config --no-analytics
 bash tool/supabase.sh start
 python3 tool/prepare-local.py
